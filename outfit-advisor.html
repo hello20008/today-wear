@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-sp-mode="scroll">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>今天穿什么 · 温馨穿衣搭配助手</title>
+<style>
+  :root{
+    --accent:#e8967a;
+    --accent-deep:#d97757;
+    --bg:#fdf6ee;
+    --panel:#fffdf9;
+    --text:#5b4a3f;
+    --text-light:#9b8a7d;
+    --milk:#fbeee2;
+    --border:#f5e3d3;
+    --shadow:0 6px 24px rgba(217,119,87,.12);
+    --result-a:#fff4e4;
+    --result-b:#fdeade;
+    --result-border:#f2ddc6;
+  }
+  body[data-theme=pink]{--accent:#e8a7b8;--accent-deep:#d97b93;--bg:#fdf1f3;--milk:#fbe7ec;--border:#f5dbe2;
+    --shadow:0 6px 24px rgba(217,123,147,.12);--result-a:#fff0f3;--result-b:#fde8ed;--result-border:#f5d9e0;--text:#5f434a;--text-light:#a17f89;--panel:#fffafb}
+  body[data-theme=green]{--accent:#a3bd8d;--accent-deep:#7fa066;--bg:#f4f7ee;--milk:#e8efdd;--border:#dfe8d2;
+    --shadow:0 6px 24px rgba(127,160,102,.14);--result-a:#f2f7e8;--result-b:#e9f1dc;--result-border:#dde7cd;--text:#46503c;--text-light:#87907a;--panel:#fcfdf8}
+  body[data-theme=blue]{--accent:#9db4c9;--accent-deep:#6f93b3;--bg:#f0f5f9;--milk:#e2ecf4;--border:#dae6ef;
+    --shadow:0 6px 24px rgba(111,147,179,.14);--result-a:#ecf3f8;--result-b:#e2edf5;--result-border:#d5e3ee;--text:#3d4a55;--text-light:#7d8d9a;--panel:#fbfdfe}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(180deg,var(--milk) 0%,var(--bg) 40%,var(--milk) 100%);
+    color:var(--text);
+    min-height:100vh;
+    line-height:1.6;
+  }
+  .topbar{max-width:960px;margin:0 auto;display:flex;justify-content:flex-end;gap:8px;padding:14px 16px 0;flex-wrap:wrap}
+  .theme-dot{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer}
+  .theme-dot.on{outline:2px solid var(--accent-deep);outline-offset:2px}
+  .hero{text-align:center;padding:clamp(20px,4vw,36px) 16px clamp(16px,3vw,28px)}
+  .hero .sun{font-size:clamp(36px,6vw,52px)}
+  .hero h1{font-size:clamp(26px,5vw,42px);color:var(--accent-deep);margin:6px 0 4px;letter-spacing:2px}
+  .hero p{color:var(--text-light);font-size:clamp(13px,2.5vw,15px)}
+  .wrap{max-width:960px;margin:0 auto;padding:0 16px 48px}
+  .card{background:var(--panel);border-radius:20px;box-shadow:var(--shadow);padding:clamp(16px,3.5vw,26px);margin-bottom:20px;border:1px solid var(--border)}
+  .card h2{font-size:clamp(16px,3vw,19px);color:var(--accent-deep);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .opt{padding:10px 16px;min-height:44px;border-radius:999px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+  .opt:hover{border-color:var(--accent);background:var(--milk)}
+  .opt.on{background:var(--accent-deep);border-color:var(--accent-deep);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+  .opt.hint{opacity:.55;cursor:default;border-style:dashed}
+  .swatch{width:16px;height:16px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .result{background:linear-gradient(135deg,var(--result-a),var(--result-b));border:1px solid var(--result-border)}
+  .result .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .result .big{font-size:clamp(34px,7vw,48px)}
+  .result h3{font-size:clamp(18px,3.5vw,23px);color:var(--accent-deep)}
+  .result .tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .tag{background:#fff;border:1px solid var(--border);color:var(--text);border-radius:999px;padding:4px 12px;font-size:13px}
+  .tip{color:var(--text-light);font-size:14px}
+  .empty{text-align:center;color:var(--text-light);padding:16px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .weather-line{font-size:14px;color:var(--text-light);margin-top:10px;min-height:22px}
+  .weather-line b{color:var(--accent-deep)}
+  .cityrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .cityrow input{flex:1;min-width:160px;padding:10px 14px;min-height:44px;border-radius:999px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:14px;outline:none}
+  .cityrow input:focus{border-color:var(--accent)}
+  .cityrow button{flex-shrink:0}
+  .showbox{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .figure{font-size:clamp(56px,12vw,84px);line-height:1.2;filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
+  .palette{display:flex;gap:8px;flex-wrap:wrap}
+  .pcard{width:44px;text-align:center;font-size:11px;color:var(--text-light)}
+  .pcard i{display:block;width:34px;height:34px;border-radius:12px;margin:0 auto 4px;border:1px solid rgba(0,0,0,.1)}
+  .favlist{display:flex;flex-direction:column;gap:10px}
+  .fav{background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .fav .fav-emoji{font-size:24px}
+  .fav .fav-main{flex:1;min-width:180px;font-size:13px}
+  .fav .fav-main b{color:var(--accent-deep)}
+  .fav button.del{padding:6px 12px;min-height:32px;font-size:12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--text-light);cursor:pointer}
+  .fav button.del:hover{color:#c0392b;border-color:#c0392b}
+  .btn{padding:10px 18px;min-height:44px;border-radius:999px;border:none;background:var(--accent-deep);color:#fff;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+  .btn:hover{filter:brightness(1.06)}
+  .btn:disabled{opacity:.5;cursor:default}
+  footer{text-align:center;color:var(--text-light);font-size:13px;padding:12px 0 28px}
+  button:focus-visible{outline:2px solid var(--accent-deep)}
+</style>
+</head>
+<body>
+<div class="topbar" title="换配色">
+  <span style="align-self:center;color:var(--text-light);font-size:13px">🎨 配色</span>
+  <button class="theme-dot" data-theme="" style="background:#e8967a" aria-label="奶油橘"></button>
+  <button class="theme-dot" data-theme="pink" style="background:#e8a7b8" aria-label="樱花粉"></button>
+  <button class="theme-dot" data-theme="green" style="background:#a3bd8d" aria-label="抹茶绿"></button>
+  <button class="theme-dot" data-theme="blue" style="background:#9db4c9" aria-label="雾霾蓝"></button>
+</div>
+
+<div class="hero">
+  <div class="sun">🌤️</div>
+  <h1>今天穿什么</h1>
+  <p>查实时天气 · 定温度 · 挑一套喜欢的穿搭 ☕</p>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h2>📍 城市实时天气</h2>
+    <div class="cityrow">
+      <input id="cityInput" placeholder="输入城市名，如：宁波 / 上海 / 哈尔滨" aria-label="城市名">
+      <button class="btn" id="cityBtn">查天气</button>
+    </div>
+    <div class="weather-line" id="weatherLine">也可以不用查天气，直接在下面手动选择 ☁️</div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>🌦️ 今日天气</h2>
+      <div class="opts" id="weatherOpts"></div>
+    </div>
+    <div class="card">
+      <h2>🌡️ 当前温度</h2>
+      <div class="opts" id="tempOpts"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📍 所在地区</h2>
+    <div class="opts" id="regionOpts"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>👤 性别</h2>
+      <div class="opts" id="genderOpts"></div>
+    </div>
+    <div class="card">
+      <h2>🧥 款式 <span id="styleHint" style="font-size:12px;color:var(--text-light);font-weight:normal">（先在左侧选性别）</span></h2>
+      <div class="opts" id="styleOpts"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>🎨 颜色偏好</h2>
+      <div class="opts" id="colorOpts"></div>
+    </div>
+    <div class="card">
+      <h2>👟 鞋子种类</h2>
+      <div class="opts" id="shoeOpts"></div>
+    </div>
+  </div>
+
+  <div class="card result">
+    <h2>🧺 今日穿搭推荐</h2>
+    <div id="resultBox"><div class="empty">完成上面的选择，小陶马上为你搭配 ✨</div></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="favBtn">💖 收藏这套穿搭</button>
+      <button class="btn" id="randBtn" style="background:var(--accent)">🎲 随机来一套</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🪞 穿搭展示区</h2>
+    <div id="showBox"><div class="empty">选好后这里会展示今日穿搭的整体效果 🪄</div></div>
+  </div>
+
+  <div class="card">
+    <h2>💖 我的收藏 <span id="favCount" style="font-size:12px;color:var(--text-light);font-weight:normal"></span></h2>
+    <div class="favlist" id="favList"><div class="empty">还没有收藏，搭配好后点「收藏这套穿搭」留个底 🤍</div></div>
+  </div>
+</div>
+
+<footer>温馨提示：推荐仅供参考，穿得舒服最重要 🤍</footer>
+
+<script>
+(function(){
+  var state={region:null,weather:null,temp:null,gender:null,style:null,color:null,shoe:null,city:null,liveTemp:null};
+  var REGIONS=[
+    {id:"huanan",name:"华南（广州/深圳）",season:"偏热，夏长冬短"},
+    {id:"jiangnan",name:"江南（上海/宁波）",season:"四季分明，湿度较大"},
+    {id:"huabei",name:"华北（北京/天津）",season:"春秋短，冬季干冷"},
+    {id:"dongbei",name:"东北（哈尔滨/沈阳）",season:"冬季寒冷漫长"},
+    {id:"xibei",name:"西北（西安/兰州）",season:"干燥，昼夜温差大"},
+    {id:"xinan",name:"西南（成都/昆明）",season:"温和多雾，紫外线强"}
+  ];
+  var WEATHERS=[
+    {id:"sunny",name:"晴 ☀️",tip:"紫外线可能较强"},
+    {id:"cloudy",name:"多云 ⛅",tip:"体感舒适"},
+    {id:"rain",name:"下雨 🌧️",tip:"记得带伞"},
+    {id:"snow",name:"下雪 ❄️",tip:"注意防滑保暖"},
+    {id:"wind",name:"大风 💨",tip:"防风是关键"}
+  ];
+  var TEMPS=[
+    {id:"cold",name:"≤ 0°C 🥶",label:"严寒",lo:-99,hi:0},
+    {id:"cool",name:"0~10°C 🧥",label:"寒冷",lo:0,hi:10},
+    {id:"mild",name:"10~18°C 👕",label:"微凉",lo:10,hi:18},
+    {id:"warm",name:"18~26°C 🌿",label:"舒适",lo:18,hi:26},
+    {id:"hot",name:"> 26°C 🍉",label:"炎热",lo:26,hi:99}
+  ];
+  var GENDERS=[{id:"m",name:"男生 👦"},{id:"f",name:"女生 👧"}];
+  var STYLES={
+    m:[{id:"casual",name:"休闲 🧢"},{id:"sport",name:"运动 🏃"},{id:"business",name:"商务 👔"},{id:"street",name:"街头 🛹"}],
+    f:[{id:"sweet",name:"甜美 🎀"},{id:"casual",name:"休闲 🧢"},{id:"elegant",name:"优雅 👗"},{id:"sport",name:"运动 🏃"}]
+  };
+  var COLORS=[
+    {id:"cream",name:"奶油白",hex:"#f6efe3"},
+    {id:"brown",name:"大地棕",hex:"#a67c52"},
+    {id:"pink",name:"樱花粉",hex:"#f3c1c6"},
+    {id:"blue",name:"雾霾蓝",hex:"#9db4c9"},
+    {id:"green",name:"抹茶绿",hex:"#b5c9a5"},
+    {id:"black",name:"经典黑",hex:"#3d3a37"},
+    {id:"orange",name:"暖橘",hex:"#e8967a"},
+    {id:"grey",name:"燕麦灰",hex:"#c9c0b4"}
+  ];
+  var SHOES=[
+    {id:"sneaker",name:"运动鞋 👟"},{id:"boot",name:"短靴 🥾"},{id:"leather",name:"皮鞋 👞"},
+    {id:"canvas",name:"帆布鞋 🩰"},{id:"sandal",name:"凉鞋 🩴"},{id:"snowboot",name:"雪地靴 🧦"}
+  ];
+  var WARDROBE={
+    cold:{m:{top:"加厚羽绒服 + 高领毛衣",bottom:"加绒牛仔裤",extra:"围巾 + 手套 + 毛线帽"},
+          f:{top:"长款羽绒服 + 针织连衣裙",bottom:"加绒打底裤",extra:"围巾 + 毛线帽"}},
+    cool:{m:{top:"呢子大衣 / 棉服 + 卫衣",bottom:"厚款休闲裤",extra:"薄围巾"},
+          f:{top:"呢子大衣 + 毛衣",bottom:"长裙 / 厚裤",extra:"贝雷帽"}},
+    mild:{m:{top:"夹克 / 风衣 + 长袖T恤",bottom:"牛仔裤",extra:"薄外套备一件"},
+          f:{top:"针织开衫 + 衬衫裙",bottom:"半身裙 / 直筒裤",extra:"丝巾点缀"}},
+    warm:{m:{top:"短袖T恤 / 薄衬衫",bottom:"休闲裤 / 短裤",extra:"防晒备起来"},
+          f:{top:"连衣裙 / 短袖上衣",bottom:"半身裙 / 阔腿裤",extra:"防晒小外套"}},
+    hot:{m:{top:"速干短袖",bottom:"短裤",extra:"遮阳帽 + 冰袖"},
+         f:{top:"吊带 + 防晒衫",bottom:"短裙 / 短裤",extra:"草帽 + 防晒霜"}}
+  };
+  var WEATHER_ADJ={
+    rain:{m:"外搭防水冲锋衣，鞋子选防水的",f:"带一把好看的伞，鞋子选防水款"},
+    snow:{m:"换成防滑雪地靴，加保暖内搭",f:"换成雪地靴，套上加绒袜"},
+    wind:{m:"加一件防风外套，扣好拉链",f:"加一件风衣，扎起头发"},
+    sunny:{m:"选浅色系更凉爽，注意防晒",f:"浅色系显清爽，记得涂防晒"},
+    cloudy:{m:"正常穿搭即可",f:"正常穿搭即可"}
+  };
+  var SHOE_FIX={cold:"雪地靴",cool:"短靴",mild:"帆布鞋/运动鞋",warm:"运动鞋/凉鞋",hot:"凉鞋/透气运动鞋"};
+  var STYLE_EMOJI={casual:"🧢👕",sport:"🏃🎽",business:"👔💼",street:"🛹🧢",sweet:"🎀👗",elegant:"👗👠"};
+  var FIGURE={m:"🧍‍♂️",f:"🧍‍♀️"};
+  var TEMP_EMOJI={cold:"🧤",cool:"🧣",mild:"🧥",warm:"🌿",hot:"🩳"};
+
+  function find(list,id){for(var i=0;i<list.length;i++){if(list[i].id===id)return list[i];}return null;}
+  function esc(t){var d=document.createElement("div");d.textContent=(t==null?"":String(t));return d.innerHTML;}
+  function tempIdByValue(v){
+    if(v<=0)return "cold";if(v<10)return "cool";if(v<18)return "mild";if(v<=26)return "warm";return "hot";
+  }
+  function codeToWeather(c){
+    if(c===45||c===48)return "cloudy";
+    if(c<=1)return "sunny";
+    if(c<=3)return "cloudy";
+    if((c>=51&&c<=67)||(c>=80&&c<=82)||c>=95)return "rain";
+    if((c>=71&&c<=77)||c===85||c===86)return "snow";
+    return "cloudy";
+  }
+
+  function mkOpts(elId,list,type,isColor,placeholder){
+    var host=document.getElementById(elId);
+    host.innerHTML="";
+    if(placeholder&&list.length===0){
+      var h=document.createElement("span");
+      h.className="opt hint";h.textContent=placeholder;
+      host.appendChild(h);return;
+    }
+    list.forEach(function(item){
+      var b=document.createElement("button");
+      b.className="opt";b.type="button";
+      if(isColor){
+        var s=document.createElement("span");s.className="swatch";s.style.background=item.hex;
+        b.appendChild(s);b.appendChild(document.createTextNode(item.name));
+      }else{b.textContent=item.name;}
+      if(state[type]===item.id)b.classList.add("on");
+      b.addEventListener("click",function(){
+        state[type]=item.id;
+        if(type==="gender"){state.style=null;}
+        renderAll();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  // ===== 实时天气 =====
+  function fetchWeather(){
+    var city=document.getElementById("cityInput").value.trim();
+    var line=document.getElementById("weatherLine");
+    if(!city){line.textContent="请先输入城市名哦 🙏";return;}
+    line.textContent="正在查询「"+city+"」的实时天气…⏳";
+    var gl="https://geocoding-api.open-meteo.com/v1/search?count=1&language=zh&format=json&name="+encodeURIComponent(city);
+    fetch(gl).then(function(r){return r.json();}).then(function(g){
+      if(!g.results||!g.results.length){line.textContent="没找到城市「"+esc(city)+"」，换个名字试试？🗺️";return;}
+      var loc=g.results[0];
+      var wl="https://api.open-meteo.com/v1/forecast?latitude="+loc.latitude+"&longitude="+loc.longitude+"&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto";
+      return fetch(wl).then(function(r){return r.json();}).then(function(w){
+        var c=w.current;
+        state.city=loc.name;
+        state.liveTemp=Math.round(c.temperature_2m);
+        state.weather=codeToWeather(c.weather_code);
+        state.temp=tempIdByValue(c.temperature_2m);
+        var speed=Math.round(c.wind_speed_10m);
+        if(speed>=30){state.weather="wind";}
+        var wName=find(WEATHERS,state.weather)?find(WEATHERS,state.weather).name:"—";
+        var tName=find(TEMPS,state.temp)?find(TEMPS,state.temp).label:"—";
+        line.innerHTML="📍 <b>"+esc(loc.name)+"</b> 实时 "+state.liveTemp+"°C · "+esc(wName)+" · 风速 "+speed+"km/h —— 已自动选好天气「<b>"+esc(tName)+"</b>」档，可手动微调 ✅";
+        renderAll();
+      });
+    }).catch(function(){line.textContent="天气查询失败了（网络原因），可以手动选下面的天气和温度 🙏";});
+  }
+
+  // ===== 收藏 =====
+  function favKey(){return "outfit-favs-v1";}
+  function loadFavs(){try{return JSON.parse(localStorage.getItem(favKey())||"[]");}catch(e){return [];}}
+  function saveFavs(a){try{localStorage.setItem(favKey(),JSON.stringify(a));}catch(e){}}
+  function renderFavs(){
+    var list=loadFavs(),host=document.getElementById("favList");
+    document.getElementById("favCount").textContent=list.length?("（"+list.length+" 套）"):"";
+    if(!list.length){host.innerHTML='<div class="empty">还没有收藏，搭配好后点「收藏这套穿搭」留个底 🤍</div>';return;}
+    host.innerHTML="";
+    list.forEach(function(f,idx){
+      var d=document.createElement("div");d.className="fav";
+      d.innerHTML='<span class="fav-emoji">'+esc(f.emoji)+'</span>'
+        +'<span class="fav-main"><b>'+esc(f.title)+'</b> · '+esc(f.date)
+        +'<br>'+esc(f.summary)+'</span>';
+      var del=document.createElement("button");del.className="del";del.textContent="删除";
+      del.addEventListener("click",function(){var a=loadFavs();a.splice(idx,1);saveFavs(a);renderFavs();});
+      d.appendChild(del);host.appendChild(d);
+    });
+  }
+  function currentSnapshot(){
+    var g=state.gender&&GENDERS.filter(function(x){return x.id===state.gender;})[0];
+    var st=state.style&&STYLES[state.gender]&&STYLES[state.gender].filter(function(x){return x.id===state.style;})[0];
+    var t=state.temp&&TEMPS.filter(function(x){return x.id===state.temp;})[0];
+    if(!(g&&st&&t))return null;
+    return {
+      emoji:FIGURE[state.gender]+" "+(STYLE_EMOJI[state.style]||""),
+      title:g.name.replace(" 👦","").replace(" 👧","")+" · "+st.name.split(" ")[0]+"风 · "+t.label+"天",
+      date:new Date().toLocaleDateString("zh-CN"),
+      summary:(state.liveTemp!=null?("实时"+state.liveTemp+"°C · "):"")+
+        (state.city?state.city+" · ":"")+
+        (WARDROBE[t.id][state.gender].top)+"，鞋："+SHOE_FIX[t.id]
+    };
+  }
+
+  // ===== SVG 换装人物 =====
+  var PHOTO_URLS={
+    "m_casual":"https://workbuddy-space-static.codebuddy.work/image/VxNh1cmchc5HPztvWXxDgv.jpg",
+    "m_sport":"https://workbuddy-space-static.codebuddy.work/image/04K78n9N0XRIjly7OrBZPP.jpg",
+    "m_business":"https://workbuddy-space-static.codebuddy.work/image/8eWbpv60I0BYYKQyOFIA4p.jpg",
+    "m_street":"https://workbuddy-space-static.codebuddy.work/image/rUWEumvaj9gnkOE9fh3i67.jpg",
+    "f_sweet":"https://workbuddy-space-static.codebuddy.work/image/GO78atdYxroVeGeOtFaTuK.jpg",
+    "f_casual":"https://workbuddy-space-static.codebuddy.work/image/9MSwcPmXjemxmkqxjGHmlp.jpg",
+    "f_elegant":"https://workbuddy-space-static.codebuddy.work/image/a9yhqm7irRUG3dQMSs6XwM.jpg",
+    "f_sport":"https://workbuddy-space-static.codebuddy.work/image/12DZzGlpjkbq9R9p3h1549.jpg"
+  };
+  var showMode=(function(){try{return localStorage.getItem("outfit-showmode")||"photo";}catch(e){return "photo";}})();
+  function hexHueSat(hex){
+    var n=parseInt(hex.slice(1),16),r=((n>>16)&255)/255,g=((n>>8)&255)/255,b=(n&255)/255;
+    var mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,h=0,s=mx===0?0:d/mx;
+    if(d){if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360;}
+    return {h:h,s:s,v:mx};
+  }
+  function photoFilter(hex){
+    var c=hexHueSat(hex);
+    if(c.s<0.18){return c.v<0.25?"grayscale(.9) contrast(1.05)":"grayscale(.75) sepia(.18) brightness(1.03)";}
+    var rot=(c.h-35+360)%360;
+    return "sepia(.38) saturate(1.5) hue-rotate("+Math.round(rot)+"deg) brightness("+(c.v<0.3?0.92:1)+")";
+  }
+
+  function shade(hex,f){
+    var n=parseInt(hex.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    function c(v){v=Math.round(v*f);return Math.max(0,Math.min(255,v));}
+    return "rgb("+c(r)+","+c(g)+","+c(b)+")";
+  }
+  var SKIN="#f3cba5",SKIN_D="#e0b18a",HAIR_C="#4a382c",DENIM="#5b7a99",DARKP="#4a4a52";
+  function dollSVG(){
+    var C=find(COLORS,state.color)||{hex:"#e8967a"};
+    var main=C.hex,dark=shade(main,0.72),light=shade(main,1.18);
+    var g=state.gender,st=state.style,w=state.weather,t=state.temp,sh=state.shoe;
+    var s='<svg viewBox="0 0 220 440" width="220" height="440" style="max-width:min(220px,55vw);height:auto" aria-label="穿搭人物">';
+    s+='<ellipse cx="110" cy="424" rx="64" ry="10" fill="rgba(0,0,0,.08)"/>';
+    s+='<circle cx="110" cy="56" r="30" fill="'+SKIN+'"/>';
+    if(g==="m"){
+      s+='<path d="M80 54 Q80 24 110 24 Q140 24 140 54 Q140 40 128 36 Q118 46 96 42 Q84 44 80 54 Z" fill="'+HAIR_C+'"/>';
+    }else{
+      s+='<path d="M78 66 Q72 22 110 22 Q148 22 142 66 L142 96 Q136 100 132 92 L132 52 Q122 44 104 44 Q86 44 82 60 L82 96 Q78 102 72 94 Z" fill="'+HAIR_C+'"/>';
+      if(st==="sweet")s+='<circle cx="72" cy="62" r="7" fill="'+main+'"/><circle cx="148" cy="62" r="7" fill="'+main+'"/>';
+    }
+    s+='<circle cx="100" cy="56" r="2.6" fill="#5b4a3f"/><circle cx="120" cy="56" r="2.6" fill="#5b4a3f"/>';
+    s+='<path d="M102 68 Q110 74 118 68" stroke="#c98a6b" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    s+='<rect x="102" y="84" width="16" height="14" fill="'+SKIN_D+'"/>';
+    function arm(x1,y1,x2,y2,col,wd){return '<path d="M'+x1+' '+y1+' Q'+((x1+x2)/2)+' '+((y1+y2)/2+14)+' '+x2+' '+y2+'" stroke="'+col+'" stroke-width="'+wd+'" fill="none" stroke-linecap="round"/>';}
+    var pantsW=26,pantsTop=214;
+    function pants(color,len){
+      len=len||372;
+      return '<path d="M'+(110-pantsW)+' '+pantsTop+' L110 '+(pantsTop+26)+' L110 '+len+' L'+(110-10)+' '+len+' L108 '+(pantsTop+40)+' L104 '+len+' L'+(110-pantsW)+' '+len+' Z" fill="none"/>'
+        +'<rect x="84" y="'+pantsTop+'" width="24" height="'+(len-pantsTop)+'" rx="4" fill="'+color+'"/>'
+        +'<rect x="112" y="'+pantsTop+'" width="24" height="'+(len-pantsTop)+'" rx="4" fill="'+color+'"/>';
+    }
+    function bareLegs(top){
+      return '<rect x="88" y="'+top+'" width="19" height="'+(386-top)+'" rx="8" fill="'+SKIN+'"/>'
+        +'<rect x="113" y="'+top+'" width="19" height="'+(386-top)+'" rx="8" fill="'+SKIN+'"/>';
+    }
+    if(g==="m"){
+      if(st==="business"){
+        s+='<path d="M84 100 Q110 94 136 100 L142 150 L138 218 L82 218 L78 150 Z" fill="#f5f2ec"/>';
+        s+='<path d="M84 100 L104 108 L110 218 L82 218 L78 150 Z" fill="'+main+'"/><path d="M136 100 L116 108 L110 218 L138 218 L142 150 Z" fill="'+main+'"/>';
+        s+='<path d="M110 104 L104 130 L110 160 L116 130 Z" fill="'+dark+'"/>';
+        s+=arm(84,104,68,170,main,13)+arm(136,104,152,170,main,13);
+        s+=pants(DARKP);
+      }else if(st==="sport"){
+        s+='<path d="M84 100 Q110 92 136 100 L140 200 L80 200 Z" fill="'+main+'"/>';
+        s+='<rect x="86" y="100" width="6" height="98" fill="#ffffff" opacity=".85"/><rect x="128" y="100" width="6" height="98" fill="#ffffff" opacity=".85"/>';
+        s+=arm(84,110,70,180,main,13)+arm(136,110,150,180,main,13);
+        s+='<path d="M80 200 L140 200 L134 250 L112 250 L110 216 L108 250 L86 250 Z" fill="'+dark+'"/>';
+        s+=bareLegs(248);
+      }else if(st==="street"){
+        s+='<path d="M80 100 Q110 90 140 100 L146 212 L74 212 Z" fill="'+main+'"/>';
+        s+='<path d="M80 100 L96 108 L92 128 L76 120 Z" fill="'+dark+'"/><path d="M140 100 L124 108 L128 128 L144 120 Z" fill="'+dark+'"/>';
+        s+='<path d="M92 168 L128 168 L124 196 L96 196 Z" fill="'+dark+'"/>';
+        s+=arm(80,112,66,190,main,15)+arm(140,112,154,190,main,15);
+        s+=pants("#b7a98a");
+      }else{
+        s+='<path d="M84 100 Q110 93 136 100 L140 208 L80 208 Z" fill="'+main+'"/>';
+        s+='<path d="M96 98 Q110 108 124 98 L124 106 Q110 114 96 106 Z" fill="'+light+'"/>';
+        s+=arm(84,110,70,182,main,13)+arm(136,110,150,182,main,13);
+        s+=pants(DENIM);
+        s+='<path d="M84 226 L100 226 M120 226 L136 226" stroke="'+shade(DENIM,0.8)+'" stroke-width="3"/>';
+      }
+    }else{
+      if(st==="elegant"){
+        s+='<path d="M88 100 Q110 94 132 100 L136 140 Q150 240 148 386 L72 386 Q70 240 84 140 Z" fill="'+main+'"/>';
+        s+='<path d="M86 100 Q110 96 134 100 L132 112 Q110 106 88 112 Z" fill="'+dark+'"/>';
+        s+='<rect x="72" y="380" width="76" height="6" rx="3" fill="'+dark+'"/>';
+        s+=arm(88,110,72,200,main,12)+arm(132,110,148,200,main,12);
+      }else if(st==="sweet"){
+        s+='<path d="M88 100 Q110 94 132 100 L134 150 Q146 200 142 268 Q110 282 78 268 Q74 200 86 150 Z" fill="'+main+'"/>';
+        s+='<path d="M96 98 Q110 108 124 98 L124 106 Q110 114 96 106 Z" fill="#ffffff" opacity=".9"/>';
+        s+='<circle cx="110" cy="152" r="7" fill="'+dark+'"/><path d="M102 148 L92 142 M118 148 L128 142" stroke="'+dark+'" stroke-width="4" stroke-linecap="round"/>';
+        s+=arm(88,110,74,178,SKIN,11)+arm(132,110,146,178,SKIN,11);
+        s+=bareLegs(266);
+      }else if(st==="sport"){
+        s+='<path d="M86 100 Q110 93 134 100 L138 190 L82 190 Z" fill="'+main+'"/>';
+        s+='<rect x="88" y="100" width="6" height="88" fill="#ffffff" opacity=".85"/><rect x="126" y="100" width="6" height="88" fill="#ffffff" opacity=".85"/>';
+        s+=arm(86,110,72,172,SKIN,11)+arm(134,110,148,172,SKIN,11);
+        s+='<path d="M82 190 L138 190 L134 236 L110 240 L86 236 Z" fill="'+dark+'"/>';
+        s+='<path d="M86 236 L110 240 L134 236 L138 372 L114 372 L110 262 L106 372 L82 372 Z" fill="'+DARKP+'"/>';
+      }else{
+        s+='<path d="M86 100 Q110 93 134 100 L138 200 L82 200 Z" fill="'+main+'"/>';
+        s+='<path d="M96 98 Q110 108 124 98 L124 106 Q110 114 96 106 Z" fill="'+light+'"/>';
+        s+=arm(86,110,72,186,main,12)+arm(134,110,148,186,main,12);
+        s+='<path d="M82 200 L138 200 L150 286 Q110 298 70 286 Z" fill="'+DENIM+'"/>';
+        s+=bareLegs(284);
+      }
+    }
+    var SHC={sneaker:["#ffffff","#d8d8d8"],canvas:["#f0e6d8","#c9b89a"],leather:["#4a3628","#33251a"],
+      boot:["#8a5f3d","#6b4630"],sandal:[SKIN,SKIN_D],snowboot:["#f6efe3","#e0d4c0"]};
+    var sc=SHC[sh]||SHC.sneaker;
+    var bootH=(sh==="boot"||sh==="snowboot")?46:(sh==="leather"?18:0);
+    function shoe(x){
+      var o='';
+      if(bootH){o+='<rect x="'+x+'" y="'+(386-bootH)+'" width="26" height="'+bootH+'" rx="6" fill="'+sc[0]+'"/>';}
+      o+='<path d="M'+x+' 386 L'+(x+26)+' 386 Q'+(x+38)+' 387 '+(x+35)+' 398 L'+(x+2)+' 398 Q'+x+' 392 '+x+' 386 Z" fill="'+sc[1]+'"/>';
+      if(sh==="sandal")o+='<path d="M'+(x+1)+' 385 L'+(x+25)+' 385" stroke="'+SKIN_D+'" stroke-width="4" stroke-linecap="round"/><path d="M'+(x+9)+' 378 L'+(x+17)+' 385" stroke="'+SKIN_D+'" stroke-width="3" stroke-linecap="round"/>';
+      if(sh==="sneaker")o+='<path d="M'+(x+2)+' 393 L'+(x+32)+' 393" stroke="#e0503f" stroke-width="2.5"/>';
+      if(sh==="snowboot")o+='<path d="M'+(x-2)+' '+(386-bootH)+' L'+(x+28)+' '+(386-bootH)+'" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>';
+      return o;
+    }
+    s+=shoe(80)+shoe(116);
+    if(t==="cool"||t==="cold"){
+      s+='<path d="M94 92 Q110 102 126 92 L130 106 Q110 116 90 106 Z" fill="#d95f4f"/>';
+      s+='<path d="M126 102 L132 140 L122 142 L118 108 Z" fill="#d95f4f"/>';
+    }
+    if(t==="cold"){s+='<path d="M82 42 Q110 12 138 42 L138 52 Q110 30 82 52 Z" fill="'+main+'"/>';}
+    if(w==="rain"){
+      s+='<path d="M124 66 Q166 14 208 66 Z" fill="'+shade(main,0.9)+'"/>';
+      s+='<path d="M166 30 L166 66 M124 66 L132 66 M208 66 L200 66 M166 66 L158 66 M190 66 L182 66 M142 66 L150 66" stroke="'+dark+'" stroke-width="2"/>';
+      s+='<path d="M166 40 L166 176 Q166 190 156 188" stroke="#7a5c3e" stroke-width="3.5" fill="none" stroke-linecap="round"/>';
+    }
+    if(w==="wind"){s+='<path d="M152 84 Q170 78 180 86 Q166 84 160 94 Z" fill="#c9d6df"/><path d="M154 104 Q172 98 184 106" stroke="#c9d6df" stroke-width="3" fill="none" stroke-linecap="round"/>';}
+    if(w==="sunny"&&t==="hot"){s+='<path d="M74 48 Q110 10 146 48 L168 50 Q110 30 52 50 Z" fill="#f2d38a"/>';}
+    if(w==="snow"){s+='<circle cx="62" cy="70" r="3" fill="#bcd4e6"/><circle cx="182" cy="110" r="3" fill="#bcd4e6"/><circle cx="48" cy="150" r="2.5" fill="#bcd4e6"/><circle cx="188" cy="190" r="2.5" fill="#bcd4e6"/>';}
+    s+='</svg>';
+    return s;
+  }
+
+  function renderShow(){
+    var box=document.getElementById("showBox");
+    var g=state.gender,st=state.style,t=state.temp,c=find(COLORS,state.color),sh=find(SHOES,state.shoe),w=find(WEATHERS,state.weather);
+    if(!(g&&st&&t&&c)){
+      box.innerHTML='<div class="empty">选好 性别 / 款式 / 温度 / 颜色 后，这里展示穿搭效果 🪄</div>';return;
+    }
+    var styleName=(STYLES[g]&&find(STYLES[g],st))?find(STYLES[g],st).name.split(" ")[0]:"";
+    var tabs='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
+      +'<button class="opt'+(showMode==="photo"?" on":"")+'" id="tabPhoto" type="button">📷 真人实拍</button>'
+      +'<button class="opt'+(showMode==="doll"?" on":"")+'" id="tabDoll" type="button">🎨 卡通换装</button>'
+      +'</div>';
+    var main='';
+    if(showMode==="photo"){
+      var url=PHOTO_URLS[g+"_"+st];
+      main='<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">'
+        +(url?'<img src="'+url+'" alt="'+esc(styleName)+'风穿搭实拍" width="240" style="width:min(240px,60vw);height:auto;border-radius:16px;box-shadow:var(--shadow);filter:'+photoFilter(c.hex)+'">':'')
+        +'<div style="flex:1;min-width:220px">'
+        +'<h3 style="color:var(--accent-deep);font-size:17px;margin-bottom:6px">'+esc(g==="m"?"男生":"女生")+' · '+esc(styleName)+'风</h3>'
+        +'<p class="tip" style="margin-bottom:8px">画面色调已按「'+esc(c.name)+'」映射 ✨</p>'
+        +'<div class="palette" style="margin-bottom:10px">'
+        +'<span class="pcard"><i style="background:'+c.hex+'"></i>主色</span>'
+        +'<span class="pcard"><i style="background:#f6efe3"></i>米白</span>'
+        +'<span class="pcard"><i style="background:#5b4a3f"></i>深棕</span>'
+        +'</div>'
+        +'<p class="tip">🧥 上身：'+esc(WARDROBE[t][g].top)+'</p>'
+        +(sh?'<p class="tip">👟 鞋子：'+esc(sh.name)+'</p>':"")
+        +(w?'<p class="tip">🌦️ 天气：'+esc(w.name)+' · '+esc(w.tip)+'</p>':"")
+        +'</div></div>';
+    }else{
+      main='<div class="showbox">'
+        +'<div class="figure">'+dollSVG()+'</div>'
+        +'<div style="flex:1;min-width:220px">'
+        +'<h3 style="color:var(--accent-deep);font-size:17px;margin-bottom:6px">'+esc(g==="m"?"男生":"女生")+' · '+esc(styleName)+'风</h3>'
+        +'<div class="palette" style="margin-bottom:10px">'
+        +'<span class="pcard"><i style="background:'+c.hex+'"></i>主色</span>'
+        +'<span class="pcard"><i style="background:#f6efe3"></i>米白</span>'
+        +'<span class="pcard"><i style="background:#5b4a3f"></i>深棕</span>'
+        +'</div>'
+        +'<p class="tip">🧥 上身：'+esc(WARDROBE[t][g].top)+'</p>'
+        +(sh?'<p class="tip">👟 鞋子：'+esc(sh.name)+'</p>':"")
+        +(w?'<p class="tip">🌦️ 天气：'+esc(w.name)+' · '+esc(w.tip)+'</p>':"")
+        +'</div></div>';
+    }
+    box.innerHTML=tabs+main;
+    document.getElementById("tabPhoto").addEventListener("click",function(){showMode="photo";try{localStorage.setItem("outfit-showmode","photo");}catch(e){}renderShow();});
+    document.getElementById("tabDoll").addEventListener("click",function(){showMode="doll";try{localStorage.setItem("outfit-showmode","doll");}catch(e){}renderShow();});
+  }
+
+  function renderResult(){
+    var box=document.getElementById("resultBox");
+    var r=find(REGIONS,state.region),w=find(WEATHERS,state.weather),t=find(TEMPS,state.temp),
+        g=find(GENDERS,state.gender),st=state.style?find(STYLES[state.gender]||[],state.style):null,
+        c=find(COLORS,state.color),sh=find(SHOES,state.shoe);
+    if(!(r&&w&&t&&g&&st&&c&&sh)){
+      var missing=[];
+      if(!w)missing.push("天气");if(!t)missing.push("温度");if(!r)missing.push("地区");
+      if(!g)missing.push("性别");if(!st)missing.push("款式（在「款式」卡片里选）");if(!c)missing.push("颜色");if(!sh)missing.push("鞋子");
+      box.innerHTML='<div class="empty">还差：'+missing.map(esc).join("、")+' —— 选完马上出搭配 ✨</div>';
+      return;
+    }
+    var plan=WARDROBE[t.id][g.id];
+    var wAdj=WEATHER_ADJ[w.id][g.id];
+    var shoeFinal=(t.id==="cold")?"雪地靴 🧦":(w.id==="rain"?"防水运动鞋 ☔":(w.id==="snow"?"防滑短靴 ❄️":SHOE_FIX[t.id]));
+    var styleName=st.name.split(" ")[0];
+    var tips=[];
+    tips.push(r.name+"："+r.season);
+    tips.push(w.name.replace(/[^A-Za-z\u4e00-\u9fa5]/g,"")+"天，"+w.tip+"，"+wAdj);
+    if(state.color==="black"&&t.id==="hot")tips.push("深色吸热，炎热天建议换浅色试试");
+    if(t.id==="hot"&&sh.id==="snowboot")tips.push("大热天穿雪地靴会很捂脚，慎重哦 😄");
+    if(t.id==="cold"&&sh.id==="sandal")tips.push("严寒天还是把凉鞋收起来吧 🥶");
+    box.innerHTML='<div class="top"><div class="big">'+TEMP_EMOJI[t.id]+'</div>'
+      +'<div><h3>'+esc(styleName)+'风 · '+esc(t.label)+'天穿搭</h3>'
+      +'<p style="color:var(--text-light);font-size:13px">'
+      +(state.city?esc(state.city)+' · ':'')
+      +(state.liveTemp!=null?('实时'+state.liveTemp+'°C · '):'')
+      +esc(w.name)+' · '+esc(t.name)+' · '+esc(g.name)+'</p></div></div>'
+      +'<div class="tags">'
+      +'<span class="tag">👕 上装：'+esc(plan.top)+'</span>'
+      +'<span class="tag">👖 下装：'+esc(plan.bottom)+'</span>'
+      +'<span class="tag">🧦 鞋子：'+esc(shoeFinal)+'</span>'
+      +'<span class="tag">🎒 配饰：'+esc(plan.extra)+'</span>'
+      +'<span class="tag">🎨 主色调：'+esc(c.name)+'</span>'
+      +'</div>'
+      +'<p class="tip">💡 '+tips.map(esc).join("；")+'。整体以「'+esc(c.name)+'」为主色，搭配同色系或米白单品，温馨又高级 🤍</p>';
+  }
+
+  function renderAll(){
+    mkOpts("regionOpts",REGIONS,"region");
+    mkOpts("weatherOpts",WEATHERS,"weather");
+    mkOpts("tempOpts",TEMPS,"temp");
+    mkOpts("genderOpts",GENDERS,"gender");
+    mkOpts("styleOpts",state.gender?STYLES[state.gender]:[],"style",false,state.gender?null:"请先选择性别 👈");
+    document.getElementById("styleHint").textContent=state.gender?"":"（先在左侧选性别）";
+    mkOpts("colorOpts",COLORS,"color",true);
+    mkOpts("shoeOpts",SHOES,"shoe");
+    renderResult();
+    renderShow();
+  }
+
+  // 主题
+  var savedTheme=(function(){try{return localStorage.getItem("outfit-theme")||"";}catch(e){return "";}})();
+  function applyTheme(t){
+    if(t)document.body.setAttribute("data-theme",t);else document.body.removeAttribute("data-theme");
+    try{localStorage.setItem("outfit-theme",t);}catch(e){}
+    Array.prototype.forEach.call(document.querySelectorAll(".theme-dot"),function(d){
+      d.classList.toggle("on",d.getAttribute("data-theme")===t);
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".theme-dot"),function(d){
+    d.addEventListener("click",function(){applyTheme(d.getAttribute("data-theme"));});
+  });
+  applyTheme(savedTheme);
+
+  document.getElementById("cityBtn").addEventListener("click",fetchWeather);
+  document.getElementById("cityInput").addEventListener("keydown",function(e){if(e.key==="Enter")fetchWeather();});
+  document.getElementById("favBtn").addEventListener("click",function(){
+    var s=currentSnapshot();
+    if(!s){alert("先把 性别、款式、温度 选完，才能收藏哦 🙏");return;}
+    var a=loadFavs();a.unshift(s);saveFavs(a);renderFavs();
+  });
+  document.getElementById("randBtn").addEventListener("click",function(){
+    function pick(arr){return arr[Math.floor(Math.random()*arr.length)].id;}
+    state.region=pick(REGIONS);state.weather=pick(WEATHERS);state.temp=pick(TEMPS);
+    state.gender=pick(GENDERS);state.style=pick(STYLES[state.gender]||[{id:"casual"}]);
+    state.color=pick(COLORS);state.shoe=pick(SHOES);
+    renderAll();
+  });
+
+  renderFavs();
+  renderAll();
+})();
+</script>
+</body>
+</html>

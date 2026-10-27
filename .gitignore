@@ -1,0 +1,12 @@
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# 工作区本地数据（不含源码）
+.workbuddy/
+
+# 原始大图（压缩后的 jpg 已足够，节约仓库体积）
+gen/*.png
